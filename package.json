@@ -6,8 +6,8 @@
   "scripts": {
     "start": "NODE_ENV=production node src/index.js",
     "dev": "NODE_ENV=development nodemon src/index.js",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "jest src/__tests",
+    "test:watch": "jest src/__tests__ --watch"
   },
   "devDependencies": {
     "jest": "^29.3.1",
@@ -25,6 +25,7 @@
     "morgan": "^1.10.0",
     "nodemon": "^2.0.20",
     "ramda": "^0.28.0",
+    "rimraf": "^3.0.2",
     "twitter-api-sdk": "^1.2.1",
     "uuid": "^9.0.0"
   },
