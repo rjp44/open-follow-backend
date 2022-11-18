@@ -19,7 +19,7 @@ async function authUrl(req, res) {
   const redirect_uri = encodeURIComponent(config.get("mastodon.redirect_uri"));
   const scopes = encodeURIComponent("read follow");
   let url;
-  
+
   if (!server || !server.length) {
     res.status(400).send('No server');
     return;
@@ -33,7 +33,7 @@ async function authUrl(req, res) {
   if (blob) {
     try {
       credentials = JSON.parse(blob);
-      
+
     }
     catch (err) {
       credentials = undefined;
@@ -42,14 +42,14 @@ async function authUrl(req, res) {
   if (!credentials) {
     try {
       let request = `https://${server}/api/v1/apps?client_name=${client_name}&redirect_uris=${redirect_uri}&scopes=${scopes}`;
-      
+
       let data = await axios.post(request);
       credentials = data.data;
-      
+
       await storage.save(server, JSON.stringify(credentials));
     }
     catch (err) {
-      
+
       res.status(400).send('Server doesnt support credentials');
       return;
     }
@@ -94,7 +94,7 @@ async function servers(req, res) {
       setTimeout(() => (serverList = []), 86400 * 1000);
     }
     catch (err) {
-      
+
       res.status(500).json(err);
       return;
     }
@@ -106,7 +106,7 @@ async function servers(req, res) {
 
 
 async function callback(req, res) {
-  
+
   const redirect_uri = config.get("mastodon.redirect_uri");
   const scopes = "read follow";
 
@@ -128,7 +128,7 @@ async function callback(req, res) {
       code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope: scopes
     });
 
-    
+
 
     req.session.mastodon = {
       ...req.session.mastodon, token, state: 'showtime'
@@ -140,7 +140,7 @@ async function callback(req, res) {
   }
 
   catch (error) {
-    
+
     res.send(`Invalid verifier or access tokens!\n${error}\nclose this window and retry`);
   };
 }
@@ -193,7 +193,7 @@ async function checkLogin(req, res) {
       res.status(400).send('not authenticated');
   }
   catch (err) {
-    
+
     res.status(500).send('request timeout');
   }
 }
@@ -203,7 +203,7 @@ async function passthru(req, res) {
   let { baseUrl, originalUrl, method, protocol, body } = req;
   let url = originalUrl.slice(baseUrl.length);
 
-try{
+  try {
     if (!token || state != 'showtime')
       throw new Error(`bad auth ${state} ${token && token.length} ${uid}, ${host}`);
 
@@ -217,7 +217,7 @@ try{
       if (remaining && resetTime) {
         let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf();
         let delay = timeUntil / remaining;
-        
+
         await new Promise(resolve => setTimeout(resolve, delay));
       }
       return res;
@@ -227,13 +227,13 @@ try{
       method, url: `${protocol}://${host}${url}`, body,
       headers: { "Authorization": `${token.token_type} ${token.access_token}` }
     });
-  result.headers.link && res.set(result.headers);
+    result.headers.link && res.set(result.headers);
 
-  res.status(result.status).json(result.data);
+    res.status(result.status).json(result.data);
 
   }
   catch (err) {
-    
+    console.log('passthru', { err });
     res.status(403).send(err);
   }
 
@@ -245,7 +245,7 @@ async function logout(req, res) {
   const { state, host, client_id, client_secret, uid, token } = req.session.mastodon || {};
 
   if (!state || !state === 'showtime' || !host || !client_id || !client_secret || !token) {
-    
+
     return res.status(400).send('Bad session cookie!');
     return;
   }
@@ -259,7 +259,7 @@ async function logout(req, res) {
     res.json(true);
   }
   catch (error) {
-    
+
   };
 
 }
