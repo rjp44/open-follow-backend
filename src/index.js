@@ -5,7 +5,7 @@ const { exec } = require("child_process");
 const PORT = config.get('port');
 
 
-
+console.log(config.get('storage.url'));
 exec("ls -la credentials", (error, stdout, stderr) => {
   if (error) {
     console.log(`error: ${error.message}`);
