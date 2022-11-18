@@ -4,7 +4,6 @@ const uuid = require('uuid');
 const BlobStorage = require('../lib/blobstorage');
 
 
-console.log({ env: process.env, config });
 
 const storage = new BlobStorage();
 
@@ -20,7 +19,7 @@ async function authUrl(req, res) {
   const redirect_uri = encodeURIComponent(config.get("mastodon.redirect_uri"));
   const scopes = encodeURIComponent("read follow");
   let url;
-  console.log('authUrl called with...', req.session.mastodon);
+  
   if (!server || !server.length) {
     res.status(400).send('No server');
     return;
@@ -34,7 +33,7 @@ async function authUrl(req, res) {
   if (blob) {
     try {
       credentials = JSON.parse(blob);
-      console.log('using old credentials', { credentials });
+      
     }
     catch (err) {
       credentials = undefined;
@@ -43,14 +42,14 @@ async function authUrl(req, res) {
   if (!credentials) {
     try {
       let request = `https://${server}/api/v1/apps?client_name=${client_name}&redirect_uris=${redirect_uri}&scopes=${scopes}`;
-      console.log('getting credentials', { request });
+      
       let data = await axios.post(request);
       credentials = data.data;
-      console.log('got new credentials', { data, credentials });
+      
       await storage.save(server, JSON.stringify(credentials));
     }
     catch (err) {
-      console.log(err);
+      
       res.status(400).send('Server doesnt support credentials');
       return;
     }
@@ -95,7 +94,7 @@ async function servers(req, res) {
       setTimeout(() => (serverList = []), 86400 * 1000);
     }
     catch (err) {
-      console.log('server list', err);
+      
       res.status(500).json(err);
       return;
     }
@@ -107,7 +106,7 @@ async function servers(req, res) {
 
 
 async function callback(req, res) {
-  console.log(req.originalUrl, req.session.mastodon);
+  
   const redirect_uri = config.get("mastodon.redirect_uri");
   const scopes = "read follow";
 
@@ -129,7 +128,7 @@ async function callback(req, res) {
       code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope: scopes
     });
 
-    console.log('got token', { token });
+    
 
     req.session.mastodon = {
       ...req.session.mastodon, token, state: 'showtime'
@@ -141,7 +140,7 @@ async function callback(req, res) {
   }
 
   catch (error) {
-    console.log(error);
+    
     res.send(`Invalid verifier or access tokens!\n${error}\nclose this window and retry`);
   };
 }
@@ -194,7 +193,7 @@ async function checkLogin(req, res) {
       res.status(400).send('not authenticated');
   }
   catch (err) {
-    console.log(req.originalUrl, err);
+    
     res.status(500).send('request timeout');
   }
 }
@@ -218,7 +217,7 @@ try{
       if (remaining && resetTime) {
         let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf();
         let delay = timeUntil / remaining;
-        console.log('ratelimit', { remaining, timeUntil, delay });
+        
         await new Promise(resolve => setTimeout(resolve, delay));
       }
       return res;
@@ -234,7 +233,7 @@ try{
 
   }
   catch (err) {
-    console.log(err);
+    
     res.status(403).send(err);
   }
 
@@ -246,7 +245,7 @@ async function logout(req, res) {
   const { state, host, client_id, client_secret, uid, token } = req.session.mastodon || {};
 
   if (!state || !state === 'showtime' || !host || !client_id || !client_secret || !token) {
-    console.log('bad session cookie', { state, host, client_id, client_secret, uid, token });
+    
     return res.status(400).send('Bad session cookie!');
     return;
   }
@@ -260,7 +259,7 @@ async function logout(req, res) {
     res.json(true);
   }
   catch (error) {
-    console.log(error);
+    
   };
 
 }

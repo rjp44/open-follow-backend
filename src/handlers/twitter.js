@@ -7,7 +7,7 @@ now = () => (new Date().valueOf())
 staleTime = 30 * 1000;
 
 function authUrl(req, res, next) {
-  console.log(req.originalUrl, req.session.twitter);
+  
   let { state, url, codeVerifier, authTime } = req.session.twitter || {};
   try {
     if (url && url.includes(codeVerifier) && authTime && now() - authTime < staleTime) {
@@ -24,7 +24,7 @@ function authUrl(req, res, next) {
       code_challenge_method: "plain",
       code_challenge: codeVerifier
     });
-    console.log('authUrl', { codeVerifier });
+    
     req.session.twitter = { codeVerifier, state: 'initial', url, authTime: now() };
     res.json({ url });
   }
@@ -37,7 +37,7 @@ function authUrl(req, res, next) {
 waiting = {};
 
 async function callback(req, res) {
-  console.log(req.originalUrl, req.session.twitter);
+  
 
   const authClient = new auth.OAuth2User(OAUTH_CONFIG);
   const client = new Client(authClient);
@@ -58,7 +58,6 @@ async function callback(req, res) {
     code_challenge_method: "plain",
     code_challenge: codeVerifier
   });
-  console.log('callback', { codeVerifier });
   authClient.requestAccessToken(code)
     .then(async ({ token }) => {
 
@@ -78,14 +77,13 @@ async function callback(req, res) {
         id: myUser.data.id,
         myUser: myUser.data
       };
-      console.log('after token fetch', req.session.twitter);
       waiting[codeVerifier] && waiting[codeVerifier].forEach(resolver => resolver(req.session.twitter));
       waiting[codeVerifier] = undefined;
       res.send('<script>window.close();</script>');
       //res.json(followers.data);
     })
     .catch((error) => {
-      console.log(error);
+      
       res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
     });
 };
@@ -93,7 +91,7 @@ async function callback(req, res) {
 
 async function checkLogin(req, res) {
   let { state, codeVerifier, token, id, myUser } = req.session.twitter || {};
-  console.log(req.originalUrl, req.session.twitter);
+  
 
   let items;
   try {
@@ -111,7 +109,7 @@ async function checkLogin(req, res) {
     if (!(state && codeVerifier && token && id))
       throw 'no state';
 
-    console.log('checkLogin', req.session.twitter);
+    
     if (state && codeVerifier && token && id && myUser) {
       req.session.save(() => res.json(myUser));
     }
@@ -120,7 +118,7 @@ async function checkLogin(req, res) {
     }
   }
   catch (err) {
-    console.log('checkLogin', { err }, { state, codeVerifier, token, id, myUser });
+    
     res.status(400).send('something went wrong');
   }
 
@@ -146,13 +144,13 @@ async function checkStatus(req, res) {
         res.json({ state, user: myUser });
       }
       else {
-        console.log('in showtime but no token');
+        
         throw new Error('no valid state');
       }
 
     }
     catch (err) {
-      console.log(err);
+      
       state = 'initial';
       req.session.twitter.state = state ;
       res.json(state);
@@ -198,14 +196,14 @@ async function lists(req, res) {
     }, { max_results: 1000 });
     res.type('txt');
     for await (const page of items) {
-      console.log('got page', { meta: page.meta });
+      
       page.data && page.data.forEach(data => res.write(JSON.stringify(data) + ','));
     }
     res.end();
 
   }
   catch (err) {
-    console.log({ err });
+    
     if (err.status === 429) {
       res.end();
     }
@@ -225,7 +223,7 @@ async function logout(req, res) {
 
 
   if (!state || !state === 'showtime' || !token || !id) {
-    console.log('bad session cookie', { state, codeVerifier, token, id });
+    
     return res.status(400).send('Bad session cookie!');
   }
 
@@ -235,7 +233,7 @@ async function logout(req, res) {
 
     const response = await authClient.revokeAccessToken();
 
-    console.log('got data', { response });
+    
 
     req.session.twitter = { state: 'initial' };
 
@@ -244,7 +242,7 @@ async function logout(req, res) {
   }
 
   catch (error) {
-    console.log(error);
+    
     res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
   };
 
