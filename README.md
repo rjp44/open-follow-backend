@@ -1,4 +1,4 @@
-# SMB Backend
+# Backend
 
 An Express app
 
