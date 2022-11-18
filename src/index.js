@@ -1,7 +1,22 @@
 const config = require('config');
 const server = require("./server.js");
+const { exec } = require("child_process");
 
 const PORT = config.get('port');
+
+
+
+exec("ls -la credentials", (error, stdout, stderr) => {
+  if (error) {
+    console.log(`error: ${error.message}`);
+    return;
+  }
+  if (stderr) {
+    console.log(`stderr: ${stderr}`);
+    return;
+  }
+  console.log(`stdout: ${stdout}`);
+});
 
 server.listen(PORT, () => console.info(`Listening on http://localhost:${PORT}`));
 
