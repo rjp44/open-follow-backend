@@ -9,7 +9,10 @@
     "test": "jest",
     "test:watch": "jest --watch"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "jest": "^29.3.1",
+    "supertest": "^6.3.1"
+  },
   "dependencies": {
     "@google-cloud/storage": "^6.7.0",
     "@tweedegolf/storage-abstraction": "^1.4.3",

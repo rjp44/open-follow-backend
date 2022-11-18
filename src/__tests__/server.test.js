@@ -14,12 +14,3 @@ test("Server returns error for missing route", () => {
     info: "Path '/NOT-REAL' does not exist",
   });
 });
-
-describe("Auth middleware protects authenticated routes", () => {
-  test("Rejects requests with no authorization header", () => {
-    return supertest(server).get("/api/verify").expect(400, {
-      error: "Bad Request",
-      info: "Authorization header is required",
-    });
-  });
-});
