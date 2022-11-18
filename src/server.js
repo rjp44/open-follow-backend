@@ -25,7 +25,7 @@ server.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
 );
 server.use(cors({
-  origin: ['http://localhost:3000', 'https://twitter.com', 'https://openfollow.me', 'https://www.openfollow.me'],
+  origin: ['http://localhost:3000', 'http://localhost:5001', 'https://openfollow.me', 'https://www.openfollow.me'],
   allowedHeaders: ['Cookie', 'Link'],
   exposedHeaders: ['Link'],
   credentials: true,
