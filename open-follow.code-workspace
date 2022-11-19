@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "open-follow",
+			"path": "../open-follow"
+		},
+		{
+			"name": "open-follow-backend",
+			"path": "."
+		}
+	],
+  "settings": {}
+}
