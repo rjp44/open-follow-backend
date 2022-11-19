@@ -13,7 +13,8 @@ let serverList = [];
 
 async function authUrl(req, res) {
   let { server } = req.query;
-  let blob = await storage.fetch(server);
+  let blobname = `${config.get('backend_host')}-${server}`;
+  let blob = await storage.fetch(blobname);
   let credentials = undefined;
   const client_name = config.get("mastodon.client_name");
   const redirect_uri = encodeURIComponent(config.get("mastodon.redirect_uri"));
@@ -46,7 +47,7 @@ async function authUrl(req, res) {
       let data = await axios.post(request);
       credentials = data.data;
 
-      await storage.save(server, JSON.stringify(credentials));
+      await storage.save(blobname, JSON.stringify(credentials));
     }
     catch (err) {
 
