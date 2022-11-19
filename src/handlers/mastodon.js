@@ -203,6 +203,7 @@ async function passthru(req, res) {
   let { baseUrl, originalUrl, method, protocol, body } = req;
   let url = originalUrl.slice(baseUrl.length);
 
+  console.log('PASSTHRU', { url });
   try {
     if (!token || state != 'showtime')
       throw new Error(`bad auth ${state} ${token && token.length} ${uid}, ${host}`);
@@ -227,9 +228,9 @@ async function passthru(req, res) {
       method, url: `${protocol}://${host}${url}`, body,
       headers: { "Authorization": `${token.token_type} ${token.access_token}` }
     });
-    console.log('headers', { headers: result.headers });
+    console.log('headers', { result });
     result.headers.link && res.set(result.headers);
-
+    console.log('sedning', { res, status: result.status });
     res.status(result.status).json(result.data);
 
   }
