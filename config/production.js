@@ -1,5 +1,3 @@
-const defer = require('config/defer').deferConfig;
-
 module.exports = {
   backend_host: process.env.BACKEND_HOST || 'api.openfollow.me',
   storage: {

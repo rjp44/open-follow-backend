@@ -5,7 +5,7 @@ const { exec } = require("child_process");
 const PORT = config.get('port');
 
 
-server.listen(PORT, () => console.info(`Listening on http://localhost:${PORT}`));
+server.listen(PORT, () => console.info(`Listening on http://${config.get('backend_host')}:${PORT}`));
 
 process.on("unhandledRejection", (error) => {
   console.error(error);
