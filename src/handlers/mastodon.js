@@ -217,7 +217,7 @@ async function passthru(req, res) {
       if (remaining && resetTime) {
         let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf();
         let delay = timeUntil / remaining;
-
+        console.log('ratelimit', { remaining, timeUntil, delay });
         await new Promise(resolve => setTimeout(resolve, delay));
       }
       return res;
@@ -227,6 +227,7 @@ async function passthru(req, res) {
       method, url: `${protocol}://${host}${url}`, body,
       headers: { "Authorization": `${token.token_type} ${token.access_token}` }
     });
+    console.log('headers', { headers: result.headers });
     result.headers.link && res.set(result.headers);
 
     res.status(result.status).json(result.data);
