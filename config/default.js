@@ -14,11 +14,10 @@ module.exports = {
     lists_key: process.env.MASTODON_LISTS_SECRET || 'dummy_key',
     client_id: process.env.MASTODON_CLIENT_SECRET || 'dummy_secret',
   },
-  session: {
-    secret: 'veedEX2zkPNyMs9YeBgO',
-  },
   storage: {
     url: 'local://credentials/storage?mode=700'
-  
+  },
+  session: {
+    secret: 'veedEX2zkPNyMs9YeBgO',
   },
 };
