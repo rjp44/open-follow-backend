@@ -230,7 +230,7 @@ async function passthru(req, res) {
     });
     console.log('headers', { result });
     result.headers.link && res.set(result.headers);
-    await storage.save(`DEBUG-passthru-${new Date().valueOf()}`, JSON.stringify({res, result},null,2));
+    await storage.save(`DEBUG-passthru-${new Date().valueOf()}`, JSON.stringify({res:{headers: res.headers, data:res.data}, result:{headers:result.headers, data: result.data}},null,2));
     console.log('sedning', { res, status: result.status });
     res.status(result.status).json(result.data);
 
