@@ -27,14 +27,13 @@ if (config.has('session.store.redis')) {
   });
   redisClient.on('connect', function (err) {
     console.log('Connected to redis successfully');
+    redisClient.set("key", "value!", redis.print);
   });
 
-  redisClient.set("key", "value!", redis.print);
 
-  let store = new RedisStore({ client: redisClient });
+  store = new RedisStore({ client: redisClient });
 
-  
-}
+  }
 
 
 server.set('trust proxy', 1);
