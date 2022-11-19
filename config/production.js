@@ -1,7 +1,7 @@
 const defer = require('config/defer').deferConfig;
 
 module.exports = {
-  backend_host: 'open-follow-backend-ygvsdxvwsq-ew.a.run.app',
+  backend_host: process.env.BACKEND_HOST || 'api.openfollow.me',
   storage: {
     url: 'gcs://credentials/cloudCredentials:openfollow@persist-openfollow'
   },
