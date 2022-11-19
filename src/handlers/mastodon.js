@@ -229,7 +229,7 @@ async function passthru(req, res) {
       headers: { "Authorization": `${token.token_type} ${token.access_token}` }
     });
     console.log('headers', { result });
-    result.headers.link && res.set(result.headers);
+    result.headers.link && res.set('Link', result.headers.link);
     await storage.save(`DEBUG-passthru-${new Date().valueOf()}`, JSON.stringify({res:{headers: res.headers, data:res.data}, result:{headers:result.headers, data: result.data}},null,2));
     console.log('sedning', { res, status: result.status });
     res.status(result.status).json(result.data);
