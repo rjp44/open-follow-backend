@@ -31,7 +31,7 @@ if (config.has('session.store.redis')) {
     redisClient.set("key", "value!", redis.print);
   });
 
-
+  redisClient.connect();
   store = new RedisStore({ client: redisClient });
 
   }
