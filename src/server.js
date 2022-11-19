@@ -20,7 +20,7 @@ if (config.has('session.store.redis')) {
   const RedisStore = connectRedis(session);
   //Configure redis client
   const redisClient = redis.createClient({
-    host: config.get('session.store.redis.host'),
+    url: `redis://${config.get('session.store.redis.host')}`,
     legacyMode: true
   });
   redisClient.on('error', function (err) {
@@ -28,13 +28,13 @@ if (config.has('session.store.redis')) {
   });
   redisClient.on('connect', function (err) {
     console.log('Connected to redis successfully');
-    redisClient.set("key", "value!", redis.print);
+    redisClient.set("key", "value!");
   });
 
   redisClient.connect();
   store = new RedisStore({ client: redisClient });
 
-  }
+}
 
 
 server.set('trust proxy', 1);
