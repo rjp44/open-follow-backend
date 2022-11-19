@@ -76,6 +76,16 @@ server.get("/mastodon/checkStatus", mastodon.checkStatus);
 server.get("/mastodon/logout", mastodon.logout);
 server.use("/mastodon/passthru", mastodon.passthru);
 
+
+server.get("/ping", (req, res) => {
+  let { nonce } = req.query;
+  nonce && (req.session.nonce = nonce);
+  console.log({ nonce }, req.session, req.session.nonce, req.query);
+  return res.json(req.session.nonce);
+});
+  
+
+
 server.use((req, res, next) => {
   const error = new Error(`Path '${req.url}' does not exist`);
   error.status = 404;
