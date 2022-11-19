@@ -1,6 +1,9 @@
 
+const config = require('config');
 const express = require("express");
 const session = require('express-session');
+const redis = require('redis');
+const connectRedis = require('connect-redis');
 const cors = require("cors");
 const morgan = require("morgan");
 const handleErrors = require("./middleware/errors");
@@ -9,11 +12,37 @@ const mastodon = require("./handlers/mastodon");
 
 const server = express();
 
+let store = undefined;
+
+if (config.has('session.store.redis')) {
+  console.log('have redis config', config.get('session.store.redis.host'));
+
+  const RedisStore = connectRedis(session);
+  //Configure redis client
+  const redisClient = redis.createClient({
+    url: `redis://${config.get('session.store.redis.host')}`,
+    legacyMode: true
+  });
+  redisClient.on('error', function (err) {
+    console.log('Could not establish a connection with redis. ' + err);
+  });
+  redisClient.on('connect', function (err) {
+    console.log('Connected to redis successfully');
+    redisClient.set("key", "value!");
+  });
+
+  redisClient.connect();
+  store = new RedisStore({ client: redisClient });
+
+}
+
+
 server.set('trust proxy', 1);
 server.use(session({
-  secret: 'veedEX2zkPNyMs9YeBgO',
+  store,
+  secret: config.get('session.secret'),
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: {
     secure: true,
     sameSite: 'none',

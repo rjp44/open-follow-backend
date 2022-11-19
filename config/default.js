@@ -6,7 +6,7 @@ module.exports = {
   twitter: {
     callback_url: defer(function () { return `https://${this.backend_host}/twitter/callback`; }),
     client_id: process.env.TWITTER_CLIENT_KEY || 'dummy_key',
-    client_secret: process.env.TWITTER_CLIENT_SECRET || 'dummy_secret' ,
+    client_secret: process.env.TWITTER_CLIENT_SECRET || 'dummy_secret',
   },
   mastodon: {
     redirect_uri: defer(function () { return `https://${this.backend_host}/mastodon/callback`; }),
@@ -16,5 +16,8 @@ module.exports = {
   },
   storage: {
     url: 'local://credentials/storage?mode=700'
+  },
+  session: {
+    secret: 'veedEX2zkPNyMs9YeBgO',
   },
 };
