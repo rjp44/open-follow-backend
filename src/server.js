@@ -20,7 +20,8 @@ if (config.has('session.store.redis')) {
   const RedisStore = connectRedis(session);
   //Configure redis client
   const redisClient = redis.createClient({
-    host: config.get('session.store.redis.host')
+    host: config.get('session.store.redis.host'),
+    legacyMode: true
   });
   redisClient.on('error', function (err) {
     console.log('Could not establish a connection with redis. ' + err);
