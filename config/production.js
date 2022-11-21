@@ -1,5 +1,5 @@
 module.exports = {
-  backend_host: process.env.BACKEND_HOST || 'api.openfollow.me',
+  backend_host: 'openfollow.me',
   storage: {
     url: 'gcs://credentials/cloudCredentials:openfollow@persist-openfollow'
   },
