@@ -149,6 +149,7 @@ async function checkStatus(req, res) {
   catch (err) {
     req.log.error({ checkStatus: { err } });
     state = 'initial';
+    !req.session.twitter && (req.session.twitter = { });
     req.session.twitter.state = state;
     res.json(state);
   }
