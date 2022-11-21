@@ -52,7 +52,7 @@ server.use(session({
 server.use(express.json());
 
 server.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5001', 'https://openfollow.me', 'https://www.openfollow.me'],
+  origin: ['http://localhost:3000', 'http://localhost:5001', 'https://openfollow.me', 'https://www.openfollow.me', 'https://simpler-oauth.open-follow.pages.dev'],
   allowedHeaders: ['Cookie', 'Link'],
   exposedHeaders: ['Link'],
   credentials: true,
