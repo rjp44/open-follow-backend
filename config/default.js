@@ -20,10 +20,6 @@ module.exports = {
   },
   session: {
     secret: 'veedEX2zkPNyMs9YeBgO',
-    store: {
-      redis: {
-        host: process.env.REDIS_IP || 'localhost'
-      }
-    }
+
   },
 };
