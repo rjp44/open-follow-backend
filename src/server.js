@@ -9,6 +9,7 @@ const morgan = require("morgan");
 const handleErrors = require("./middleware/errors");
 const twitter = require("./handlers/twitter");
 const mastodon = require("./handlers/mastodon");
+const PinoLogger = require('pino-http');
 
 const server = express();
 
@@ -36,7 +37,6 @@ if (config.has('session.store.redis')) {
 
 }
 
-
 server.set('trust proxy', 1);
 server.use(session({
   store,
@@ -50,16 +50,34 @@ server.use(session({
   }
 }));
 server.use(express.json());
-server.use(
-  morgan(":method :url :status :res[content-length] - :response-time ms")
-);
+
 server.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5001', 'https://openfollow.me', 'https://www.openfollow.me'],
+  origin: ['http://localhost:3000', 'http://localhost:5001', 'https://openfollow.me', 'https://www.openfollow.me', 'https://simpler-oauth.open-follow.pages.dev'],
   allowedHeaders: ['Cookie', 'Link'],
   exposedHeaders: ['Link'],
   credentials: true,
 
 }));
+
+const pino = PinoLogger({
+  serializers: {
+    req: (req) => {
+      let session = req.raw;
+      //let session = res.status !== 200 && req.raw.session;
+      return ({
+        method: req.method,
+        url: req.url,
+        //session: req.raw.session,
+      });
+    },
+  },
+});
+
+server.use(pino);
+
+
+
+
 server.get("/", (req, res) => res.json({ message: "Hello world" }));
 server.get("/twitter/authUrl", twitter.authUrl);
 server.get("/twitter/callback", twitter.callback);
@@ -93,5 +111,6 @@ server.use((req, res, next) => {
 });
 
 server.use(handleErrors);
+
 
 module.exports = server;
