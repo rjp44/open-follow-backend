@@ -34,23 +34,21 @@ async function authUrl(req, res) {
   if (blob) {
     try {
       credentials = JSON.parse(blob);
-
     }
     catch (err) {
+      console.log('credentials parse', err);
       credentials = undefined;
     }
   }
   if (!credentials) {
     try {
       let request = `https://${server}/api/v1/apps?client_name=${client_name}&redirect_uris=${redirect_uri}&scopes=${scopes}`;
-
       let data = await axios.post(request);
       credentials = data.data;
-
       await storage.save(blobname, JSON.stringify(credentials));
     }
     catch (err) {
-
+      console.log(err);
       res.status(400).send('Server doesnt support credentials');
       return;
     }
@@ -124,7 +122,6 @@ async function callback(req, res) {
   }
 
   try {
-    res.status(200);
     let { data: token } = await axios.post(`https://${host}/oauth/token`, {
       code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope: scopes
     });
@@ -134,8 +131,6 @@ async function callback(req, res) {
     req.session.mastodon = {
       ...req.session.mastodon, token, state: 'showtime'
     };
-    waiting[uid] && waiting[uid].forEach(resolver => resolver(req.session.mastodon));
-    waiting[uid] = undefined;
     res.send('<script>window.close();</script>');
     //res.json(followers.data);
   }
@@ -148,31 +143,26 @@ async function callback(req, res) {
 
 async function checkStatus(req, res) {
   let { state, token, host, uid } = req.session.mastodon || {};
-  if (state !== 'showtime') {
-    res.json({ state });
-  }
-  else {
-    try {
-      if (token && host) {
-        let { data } = await axios.get({
-          url: `https://${host}/api/v1/accounts/verify_credentials`, body,
-          headers: { "Authorization": `${token.token_type} ${token.access_token}` }
-        });
-        res.json({ state, user: data });
-      }
-      else {
-        throw new Error('no valid state');
-      }
-
+  try {
+    if (token && host) {
+      let { data } = await axios.get(`https://${host}/api/v1/accounts/verify_credentials`, {
+        headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+      });
+      req.session.mastodon.state = state = 'showtime';
+      this.host = host;
+      res.json({ state, user: data, host });
     }
-    catch (err) {
-      state = 'initial';
-      req.session.twitter = { state };
-      res.json(state);
+    else {
+      req.log.info(err, 'no token');
+      res.json(false);
     }
+
   }
-
-
+  catch (err) {
+    console.log({ err });
+    req.log.error(err, 'check Status');
+    res.json(false);
+  }
 }
 
 async function checkLogin(req, res) {
