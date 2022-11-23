@@ -13,7 +13,12 @@ let waiting = {};
 
 let serverList = [];
 
-const rateLimit = axios.create({ decompress: true });
+const rateLimit = axios.create({
+  decompress: true,
+  headers: {
+    'Accept-Encoding': null
+  }
+});
 rateLimit.interceptors.request.use(function (config) {
   config.env.X_START_TIME = (new Date()).valueOf();
   return config;
