@@ -87,7 +87,6 @@ server.use("/admin/directory/status", mastodon.cacheStatus);
 server.get("/ping", (req, res) => {
   let { nonce } = req.query;
   nonce && (req.session.nonce = nonce);
-  console.log({ nonce }, req.session, req.session.nonce, req.query);
   return res.json(req.session.nonce);
 });
 
