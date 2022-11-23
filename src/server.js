@@ -2,8 +2,6 @@
 const config = require('config');
 const express = require("express");
 const session = require('express-session');
-const redis = require('redis');
-const connectRedis = require('connect-redis');
 const cors = require("cors");
 const morgan = require("morgan");
 const handleErrors = require("./middleware/errors");
@@ -11,31 +9,9 @@ const twitter = require("./handlers/twitter");
 const mastodon = require("./handlers/mastodon");
 const PinoLogger = require('pino-http');
 
+const { store, cache } = require('./middleware/datastore')(session);
+
 const server = express();
-
-let store = undefined;
-
-if (config.has('session.store.redis')) {
-  console.log('have redis config', config.get('session.store.redis.host'));
-
-  const RedisStore = connectRedis(session);
-  //Configure redis client
-  const redisClient = redis.createClient({
-    url: `redis://${config.get('session.store.redis.host')}`,
-    legacyMode: true
-  });
-  redisClient.on('error', function (err) {
-    console.log('Could not establish a connection with redis. ' + err);
-  });
-  redisClient.on('connect', function (err) {
-    console.log('Connected to redis successfully');
-    redisClient.set("key", "value!");
-  });
-
-  redisClient.connect();
-  store = new RedisStore({ client: redisClient });
-
-}
 
 server.set('trust proxy', 1);
 server.use(session({
@@ -49,6 +25,16 @@ server.use(session({
     httpOnly: false,
   }
 }));
+
+
+
+if (cache) {
+  server.use((req, res, next) => {
+    req.cache = cache;
+    next();
+  });
+}
+
 server.use(express.json());
 
 server.use(cors({
@@ -93,6 +79,9 @@ server.get("/mastodon/checkLogin", mastodon.checkLogin);
 server.get("/mastodon/checkStatus", mastodon.checkStatus);
 server.get("/mastodon/logout", mastodon.logout);
 server.use("/mastodon/passthru", mastodon.passthru);
+server.use("/mastodon/account/search", mastodon.accountSearch);
+server.use("/admin/directory/load", mastodon.cacheDir);
+server.use("/admin/directory/status", mastodon.cacheStatus);
 
 
 server.get("/ping", (req, res) => {
@@ -101,8 +90,6 @@ server.get("/ping", (req, res) => {
   console.log({ nonce }, req.session, req.session.nonce, req.query);
   return res.json(req.session.nonce);
 });
-  
-
 
 server.use((req, res, next) => {
   const error = new Error(`Path '${req.url}' does not exist`);
@@ -111,6 +98,24 @@ server.use((req, res, next) => {
 });
 
 server.use(handleErrors);
+
+process.on("unhandledRejection", (error) => {
+  console.error(error);
+  cache && cache.doCleanup(error.toString()).then(() => {
+    process.exit(1);
+  });
+
+});
+
+let sigHandler = function (signal) {
+  console.error('handling', { signal });
+  cache && cache.doCleanup(signal).then(() => {
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', sigHandler); 
+process.on('SIGINT', sigHandler);
 
 
 module.exports = server;

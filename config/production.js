@@ -1,3 +1,5 @@
+const { config } = require("dotenv");
+
 module.exports = {
   backend_method: 'https',
   backend_host: process.env.BACKEND_HOST || 'openfollow.me',
@@ -8,7 +10,8 @@ module.exports = {
   session: {
     store: {
       redis: {
-        host: process.env.REDIS_IP
+        host: process.env.REDIS_IP,
+        ttl: 86400
       }
     }
   }

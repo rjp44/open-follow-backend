@@ -3,6 +3,7 @@ const defer = require('config/defer').deferConfig;
 module.exports = {
   backend_method: 'http',
   backend_host: 'localhost:3000',
+  directory_host: 'mastodon.online',
   port: process.env.PORT || 8888,
   twitter: {
     callback_url: defer(function () { return `${this.backend_method}://${this.backend_host}/callback/twitter`; }),
@@ -14,12 +15,14 @@ module.exports = {
     client_name: 'OpenFollow',
     lists_key: process.env.MASTODON_LISTS_SECRET || 'dummy_key',
     client_id: process.env.MASTODON_CLIENT_SECRET || 'dummy_secret',
+    request: {
+      restart_time: 30000
+    }
   },
   storage: {
     url: 'local://credentials/storage?mode=700'
   },
   session: {
-    secret: 'veedEX2zkPNyMs9YeBgO',
-
+    secret: 'veedEX2zkPNyMs9YeBgO'
   },
 };
