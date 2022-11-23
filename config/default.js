@@ -3,7 +3,7 @@ const defer = require('config/defer').deferConfig;
 module.exports = {
   backend_method: 'http',
   backend_host: 'localhost:3000',
-  directory_host: 'mastodon.online',
+  directory_host: 'mastodon.social',
   port: process.env.PORT || 8888,
   twitter: {
     callback_url: defer(function () { return `${this.backend_method}://${this.backend_host}/callback/twitter`; }),
