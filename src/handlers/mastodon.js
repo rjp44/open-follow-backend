@@ -31,7 +31,7 @@ rateLimit.interceptors.response.use(async (res) => {
     let requestTime = now - startTime;
     let timeUntil = (new Date(resetTime)).valueOf() - now;
     let delay = (timeUntil / remaining) - requestTime;
-    console.log('ratelimit', { remaining, timeUntil, delay, requestTime});
+    console.log('ratelimit', { remaining, timeUntil, delay, requestTime });
     delay > 0 && await new Promise(resolve => setTimeout(resolve, delay));
   }
   return res;
@@ -111,7 +111,11 @@ async function servers(req, res) {
     try {
       let instances = await axios.get('https://instances.social/api/1.0/instances/list?count=0&sort_by=active_users&sort_order=desc',
         {
-          headers: { "Authorization": `Bearer ${secret}` }
+          decompress: false,
+          headers: {
+            "Authorization": `Bearer ${secret}`,
+            "Accept-Encoding": null
+          }
         }
       );
 
@@ -153,7 +157,7 @@ async function cacheStatus(req, res) {
 async function doCache(cache) {
   const directoryHost = config.get('directory_host');
   let code = false;
-  if (await cache.set('admin:directory:load', cache.uniqueId, {NX: true})) {
+  if (await cache.set('admin:directory:load', cache.uniqueId, { NX: true })) {
     let count = 0;
     let lastError = await cache.get('admin:directory:error');
     if (lastError && lastError.length) {
@@ -192,7 +196,7 @@ async function doCache(cache) {
       console.log({ err });
       if (err.code === 'ERR_BAD_RESPONSE') {
         const restartTime = config.get('mastodon.request.restart_time');
-        restartTime && console.log(`got error ${err} will restart in ${restartTime/1000}s`);
+        restartTime && console.log(`got error ${err} will restart in ${restartTime / 1000}s`);
         restartTime && setTimeout(() => doCache(cache), restartTime);
       }
     }
@@ -204,206 +208,206 @@ async function doCache(cache) {
 }
 
 
-  async function callback(req, res) {
+async function callback(req, res) {
 
-    const redirect_uri = config.get("mastodon.redirect_uri");
-    const scopes = "read follow";
+  const redirect_uri = config.get("mastodon.redirect_uri");
+  const scopes = "read follow";
 
-    const { state, url, host, client_id, client_secret, uid } = req.session.mastodon || {};
+  const { state, url, host, client_id, client_secret, uid } = req.session.mastodon || {};
 
-    const { code } = req.query;
+  const { code } = req.query;
 
-    if (!code) {
-      return res.status(400).send('You denied the app or your session expired!');
-    }
+  if (!code) {
+    return res.status(400).send('You denied the app or your session expired!');
+  }
 
-    if (!state || !state === 'initial' || !host) {
-      return res.status(400).send({ msg: 'Bad session cookie!', state, host, session: req.session.mastodon });
-    }
+  if (!state || !state === 'initial' || !host) {
+    return res.status(400).send({ msg: 'Bad session cookie!', state, host, session: req.session.mastodon });
+  }
 
-    try {
-      let { data: token } = await axios.post(`https://${host}/oauth/token`, {
-        code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope: scopes
-      });
+  try {
+    let { data: token } = await axios.post(`https://${host}/oauth/token`, {
+      code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope: scopes
+    });
 
 
 
-      req.session.mastodon = {
-        ...req.session.mastodon, token, state: 'showtime'
-      };
-      res.send('<script>window.close();</script>');
-      //res.json(followers.data);
-    }
-
-    catch (error) {
-
-      res.send(`Invalid verifier or access tokens!\n${error}\nclose this window and retry`);
+    req.session.mastodon = {
+      ...req.session.mastodon, token, state: 'showtime'
     };
+    res.send('<script>window.close();</script>');
+    //res.json(followers.data);
   }
 
-  async function checkStatus(req, res) {
-    let { state, token, host, uid } = req.session.mastodon || {};
-    try {
-      if (token && host) {
-        let { data } = await axios.get(`https://${host}/api/v1/accounts/verify_credentials`, {
-          headers: { "Authorization": `${token.token_type} ${token.access_token}` }
-        });
-        req.session.mastodon.state = state = 'showtime';
-        this.host = host;
-        res.json({ state, user: data, host });
-      }
-      else {
-        req.log.info(err, 'no token');
-        res.json(false);
-      }
+  catch (error) {
 
-    }
-    catch (err) {
-      req.log.error({ err });
-      req.log.error(err, 'check Status');
-      res.json(false);
-    }
-  }
+    res.send(`Invalid verifier or access tokens!\n${error}\nclose this window and retry`);
+  };
+}
 
-  async function apiGet(req, query) {
-    let { state, token, host } = req.session.mastodon || {};
-
+async function checkStatus(req, res) {
+  let { state, token, host, uid } = req.session.mastodon || {};
+  try {
     if (token && host) {
-      let { data } = await rateLimit.get(`https://${host}/${query}`, {
+      let { data } = await axios.get(`https://${host}/api/v1/accounts/verify_credentials`, {
         headers: { "Authorization": `${token.token_type} ${token.access_token}` }
       });
-      req.log.info({ data, query });
-      return data;
+      req.session.mastodon.state = state = 'showtime';
+      this.host = host;
+      res.json({ state, user: data, host });
     }
     else {
       req.log.info(err, 'no token');
-      throw new Error('no credentials');
-    }
-
-
-  }
-
-  async function checkLogin(req, res) {
-    let { state, token, uid } = req.session.mastodon || {};
-    try {
-      if (uid && !token) {
-        (req.session.mastodon = await new Promise((resolve, reject) => {
-          waiting[uid] = [...(waiting[uid] || []), resolve];
-
-          setTimeout(() => {
-            reject();
-          }, 60000);
-        }));
-      }
-      ({ state, token } = req.session.mastodon || {});
-      if (token)
-        res.json({ state });
-      else
-        res.status(400).send('not authenticated');
-    }
-    catch (err) {
-
-      res.status(500).send('request timeout');
-    }
-  }
-
-  async function passthru(req, res) {
-    let { state, token, uid, host } = req.session.mastodon || {};
-    let { baseUrl, originalUrl, method, protocol, body } = req;
-    let url = originalUrl.slice(baseUrl.length);
-
-    try {
-      if (!token || state != 'showtime')
-        throw new Error(`bad auth ${state} ${token && token.length} ${uid}, ${host}`);
-
-
-      let result = await rateLimit({
-        method, url: `${protocol}://${host}${url}`, body,
-        headers: { "Authorization": `${token.token_type} ${token.access_token}` }
-      });
-      result.headers.link && res.set('Link', result.headers.link);
-      res.status(result.status).json(result.data);
-
-    }
-    catch (err) {
-      req.log.error({ err }, 'passthru');
-      res.status(403).send(err);
+      res.json(false);
     }
 
   }
+  catch (err) {
+    req.log.error({ err });
+    req.log.error(err, 'check Status');
+    res.json(false);
+  }
+}
 
-  async function accountSearch(req, res) {
-    let { account } = req.query;
-    let [, raw, host] = [...account.matchAll(/@?([a-zA-Z0-9_]+)@?([a-zA-Z0-9_\-.]+)?/g)][0];
-    let term = `${account}`;
-    const type = 'accounts';
-    try {
-      let matches = req.cache && await req.cache.findUser(term);
+async function apiGet(req, query) {
+  let { state, token, host } = req.session.mastodon || {};
 
-      let accounts = [];
-      if (matches && matches.length) {
-        accounts = matches;
-      }
-      else {
-        ({ accounts } = await apiGet(req, `/api/v2/search?q=${encodeURIComponent(term)}${type && ('&type=' + type)}`));
+  if (token && host) {
+    let { data } = await rateLimit.get(`https://${host}/${query}`, {
+      headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+    });
+    req.log.info({ data, query });
+    return data;
+  }
+  else {
+    req.log.info(err, 'no token');
+    throw new Error('no credentials');
+  }
 
-        for (account of accounts) {
-          if (!account.acct.includes("@")) {
-            account.acct = `${account.username}@${req.session.mastodon.host}`;
-          }
-          req.cache && await req.cache.saveServer(account.acct, account);
+
+}
+
+async function checkLogin(req, res) {
+  let { state, token, uid } = req.session.mastodon || {};
+  try {
+    if (uid && !token) {
+      (req.session.mastodon = await new Promise((resolve, reject) => {
+        waiting[uid] = [...(waiting[uid] || []), resolve];
+
+        setTimeout(() => {
+          reject();
+        }, 60000);
+      }));
+    }
+    ({ state, token } = req.session.mastodon || {});
+    if (token)
+      res.json({ state });
+    else
+      res.status(400).send('not authenticated');
+  }
+  catch (err) {
+
+    res.status(500).send('request timeout');
+  }
+}
+
+async function passthru(req, res) {
+  let { state, token, uid, host } = req.session.mastodon || {};
+  let { baseUrl, originalUrl, method, protocol, body } = req;
+  let url = originalUrl.slice(baseUrl.length);
+
+  try {
+    if (!token || state != 'showtime')
+      throw new Error(`bad auth ${state} ${token && token.length} ${uid}, ${host}`);
+
+
+    let result = await rateLimit({
+      method, url: `${protocol}://${host}${url}`, body,
+      headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+    });
+    result.headers.link && res.set('Link', result.headers.link);
+    res.status(result.status).json(result.data);
+
+  }
+  catch (err) {
+    req.log.error({ err }, 'passthru');
+    res.status(403).send(err);
+  }
+
+}
+
+async function accountSearch(req, res) {
+  let { account } = req.query;
+  let [, raw, host] = [...account.matchAll(/@?([a-zA-Z0-9_]+)@?([a-zA-Z0-9_\-.]+)?/g)][0];
+  let term = `${account}`;
+  const type = 'accounts';
+  try {
+    let matches = req.cache && await req.cache.findUser(term);
+
+    let accounts = [];
+    if (matches && matches.length) {
+      accounts = matches;
+    }
+    else {
+      ({ accounts } = await apiGet(req, `/api/v2/search?q=${encodeURIComponent(term)}${type && ('&type=' + type)}`));
+
+      for (account of accounts) {
+        if (!account.acct.includes("@")) {
+          account.acct = `${account.username}@${req.session.mastodon.host}`;
         }
+        req.cache && await req.cache.saveServer(account.acct, account);
       }
-      res.json({ accounts });
-
     }
-    catch (err) {
-      req.log.error({ err });
-      process.exit(0);
-      req.log.error(err);
-      res.status(400).json(err);
-    }
-
+    res.json({ accounts });
 
   }
-
-  async function logout(req, res) {
-
-
-    const { state, host, client_id, client_secret, uid, token } = req.session.mastodon || {};
-
-    if (!state || !state === 'showtime' || !host || !client_id || !client_secret || !token) {
-
-      return res.status(400).send('Bad session cookie!');
-      return;
-    }
-
-    try {
-      axios.post(`https://${host}/oauth/revoke`, {
-        client_id, client_secret, token
-      });
-
-      req.session.mastodon = { state: 'initial' };
-      res.json(true);
-    }
-    catch (error) {
-
-    };
-
+  catch (err) {
+    req.log.error({ err });
+    process.exit(0);
+    req.log.error(err);
+    res.status(400).json(err);
   }
 
 
+}
 
-  module.exports = {
-    authUrl,
-    servers,
-    callback,
-    checkLogin,
-    checkStatus,
-    logout,
-    passthru,
-    cacheDir,
-    cacheStatus,
-    accountSearch
+async function logout(req, res) {
+
+
+  const { state, host, client_id, client_secret, uid, token } = req.session.mastodon || {};
+
+  if (!state || !state === 'showtime' || !host || !client_id || !client_secret || !token) {
+
+    return res.status(400).send('Bad session cookie!');
+    return;
+  }
+
+  try {
+    axios.post(`https://${host}/oauth/revoke`, {
+      client_id, client_secret, token
+    });
+
+    req.session.mastodon = { state: 'initial' };
+    res.json(true);
+  }
+  catch (error) {
 
   };
+
+}
+
+
+
+module.exports = {
+  authUrl,
+  servers,
+  callback,
+  checkLogin,
+  checkStatus,
+  logout,
+  passthru,
+  cacheDir,
+  cacheStatus,
+  accountSearch
+
+};
