@@ -120,7 +120,7 @@ async function servers(req, res) {
       setTimeout(() => (serverList = []), 86400 * 1000);
     }
     catch (err) {
-
+      req.log.error(err, 'servers');
       res.status(500).json(err);
       return;
     }
