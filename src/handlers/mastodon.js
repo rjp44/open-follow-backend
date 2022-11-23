@@ -3,6 +3,7 @@ const axios = require('axios');
 const uuid = require('uuid');
 const linkParser = require('parse-link-header');
 const BlobStorage = require('../lib/blobstorage');
+const logger = require('pino-http');
 
 
 
@@ -162,6 +163,10 @@ async function doCache(cache) {
     try {
       while ((dir = await rateLimit.get(`${url}&offset=${count}`)) && dir?.status === 200 && dir.data.length > 0) {
         for (account of dir.data) {
+          if (!account.acct) {
+            logger.error(account, 'mafformed');
+            continue;
+          }
           if (!account.acct.includes("@")) {
             account.acct = `${account.username}@${directoryHost}`;
           }
@@ -315,7 +320,7 @@ async function doCache(cache) {
 
     }
     catch (err) {
-      req.log.error('passthru', { err });
+      req.log.error({ err }, 'passthru');
       res.status(403).send(err);
     }
 
