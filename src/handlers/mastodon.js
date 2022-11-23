@@ -164,7 +164,7 @@ async function doCache(cache) {
       while ((dir = await rateLimit.get(`${url}&offset=${count}`)) && dir?.status === 200 && dir.data.length > 0) {
         for (account of dir.data) {
           if (!account.acct) {
-            logger.error(account, 'mafformed');
+            console.log({ account, data: dir.data, status: dir.status }, 'account error');
             continue;
           }
           if (!account.acct.includes("@")) {
