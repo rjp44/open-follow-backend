@@ -160,11 +160,13 @@ async function doCache(cache) {
       cache.del('admin:directory:error');
     }
     let url = `https://${directoryHost}/api/v1/directory?limit=1000`;
+
     try {
+      let dir;
       while ((dir = await rateLimit.get(`${url}&offset=${count}`)) && dir?.status === 200 && dir.data.length > 0) {
         for (account of dir.data) {
           if (!account.acct) {
-            console.log({ account, data: dir.data, status: dir.status }, 'account error');
+            console.log({ url, account, data: dir.data, status: dir.status }, 'account error');
             continue;
           }
           if (!account.acct.includes("@")) {
