@@ -37,6 +37,13 @@ rateLimit.interceptors.response.use(async (res) => {
   return res;
 });
 
+let safeAxios = axios.create({
+  decompress: false,
+  headers: {
+    'Accept-Encoding': null
+  }
+});
+
 
 async function authUrl(req, res) {
   let { server } = req.query;
@@ -70,7 +77,7 @@ async function authUrl(req, res) {
   if (!credentials) {
     try {
       let request = `https://${server}/api/v1/apps?client_name=${client_name}&redirect_uris=${redirect_uri}&scopes=${scopes}`;
-      let data = await axios.post(request);
+      let data = await safeAxios.post(request);
       credentials = data.data;
       await storage.save(blobname, JSON.stringify(credentials));
     }
@@ -109,7 +116,7 @@ async function servers(req, res) {
   }
   if (!serverList.length) {
     try {
-      let instances = await axios.get('https://instances.social/api/1.0/instances/list?count=0&sort_by=active_users&sort_order=desc',
+      let instances = await safeAxios.get('https://instances.social/api/1.0/instances/list?count=0&sort_by=active_users&sort_order=desc',
         {
           decompress: false,
           headers: {
@@ -226,7 +233,7 @@ async function callback(req, res) {
   }
 
   try {
-    let { data: token } = await axios.post(`https://${host}/oauth/token`, {
+    let { data: token } = await safeAxios.post(`https://${host}/oauth/token`, {
       code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope: scopes
     });
 
@@ -249,7 +256,7 @@ async function checkStatus(req, res) {
   let { state, token, host, uid } = req.session.mastodon || {};
   try {
     if (token && host) {
-      let { data } = await axios.get(`https://${host}/api/v1/accounts/verify_credentials`, {
+      let { data } = await safeAxios.get(`https://${host}/api/v1/accounts/verify_credentials`, {
         headers: { "Authorization": `${token.token_type} ${token.access_token}` }
       });
       req.session.mastodon.state = state = 'showtime';
@@ -263,7 +270,6 @@ async function checkStatus(req, res) {
 
   }
   catch (err) {
-    req.log.error({ err });
     req.log.error(err, 'check Status');
     res.json(false);
   }
@@ -383,7 +389,7 @@ async function logout(req, res) {
   }
 
   try {
-    axios.post(`https://${host}/oauth/revoke`, {
+    safeAxios.post(`https://${host}/oauth/revoke`, {
       client_id, client_secret, token
     });
 
