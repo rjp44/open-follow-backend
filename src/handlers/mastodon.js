@@ -20,7 +20,6 @@ rateLimit.interceptors.request.use(function (config) {
 });
 rateLimit.interceptors.response.use(async (res) => {
   let [remaining, resetTime] = [parseInt(res.headers['x-ratelimit-remaining']), res.headers['x-ratelimit-reset']];
-
   if (remaining && resetTime) {
     let startTime = res.config.env.X_START_TIME;
     let now = (new Date()).valueOf();
@@ -164,11 +163,11 @@ async function doCache(cache) {
     try {
       let dir;
       while ((dir = await rateLimit.get(`${url}&offset=${count}`)) && dir?.status === 200 && dir.data.length > 0) {
+        if (!Array.isArray(dir.data)) {
+          console.log({ url, data: typeof dir.data, status: dir.status, dir: dir }, 'account error');
+          continue;
+        }
         for (account of dir.data) {
-          if (!account.acct) {
-            console.log({ url, account, data: dir.data, status: dir.status }, 'account error');
-            continue;
-          }
           if (!account.acct.includes("@")) {
             account.acct = `${account.username}@${directoryHost}`;
           }
