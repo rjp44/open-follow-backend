@@ -14,7 +14,7 @@ let waiting = {};
 let serverList = [];
 
 const rateLimit = axios.create({
-  decompress: true,
+  decompress: false,
   headers: {
     'Accept-Encoding': null
   }
