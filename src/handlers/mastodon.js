@@ -174,7 +174,7 @@ async function doCache(cache) {
       }
       cache.del('admin:directory:error');
     }
-    let url = `https://${directoryHost}/api/v1/directory?limit=1000`;
+    let url = `https://${directoryHost}/api/v1/directory?order=new&limit=1000`;
 
     try {
       let dir;
