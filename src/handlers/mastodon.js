@@ -30,7 +30,7 @@ rateLimit.interceptors.response.use(async (res) => {
     let now = (new Date()).valueOf();
     let requestTime = now - startTime;
     let timeUntil = (new Date(resetTime)).valueOf() - now;
-    let delay = (timeUntil / remaining) - requestTime;
+    let delay = (timeUntil / remaining) - requestTime/2;
     console.log('ratelimit', { remaining, timeUntil, delay, requestTime });
     delay > 0 && await new Promise(resolve => setTimeout(resolve, delay));
   }
@@ -368,8 +368,6 @@ async function accountSearch(req, res) {
 
   }
   catch (err) {
-    req.log.error({ err });
-    process.exit(0);
     req.log.error(err);
     res.status(400).json(err);
   }
