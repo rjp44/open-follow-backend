@@ -1,18 +1,44 @@
 steps:
 # Note we mount the ssh directory from steps above within the build workspace so that the Dockerfile can see it
 - name: 'docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/backend:$SHORT_SHA', '.']
+  args: ['build', '-t', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:$SHORT_SHA', '--no-cache', '.']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'gcr.io/$PROJECT_ID/backend:$SHORT_SHA', 'gcr.io/$PROJECT_ID/backend:latest']
+  args: ['tag', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:$SHORT_SHA', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:latest']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'gcr.io/$PROJECT_ID/backend:$SHORT_SHA', 'gcr.io/$PROJECT_ID/backend:$BRANCH_NAME']
+  args: ['tag', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:$SHORT_SHA', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:$BRANCH_NAME']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/backend:$SHORT_SHA']
+  args: ['push', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:$SHORT_SHA']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/backend:latest']
+  args: ['push', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:latest']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/backend:$BRANCH_NAME']
-- name: 'gcr.io/cloud-builders/gcloud'
-  args: [ 'beta', 'run', 'deploy', '--region', 'europe-west1', '--image', 'gcr.io/$PROJECT_ID/backend', '--platform', 'managed', 'backend-$BRANCH_NAME' ]
+  args: ['push', '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:$BRANCH_NAME']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+  args:
+    - run
+    - services
+    - update
+    - $_SERVICE_NAME
+    - '--platform=managed'
+    - '--image=$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME:$SHORT_SHA'
+    - >-
+      --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID,$_LABELS
+    - '--region=$_DEPLOY_REGION'
+    - '--quiet'
+  id: Deploy
+  entrypoint: gcloud
 images:
-- 'gcr.io/$PROJECT_ID/backend'
+  - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME'
+
+options:
+  substitutionOption: ALLOW_LOOSE
+substitutions:
+  _PLATFORM: managed
+  _LABELS: gcb-trigger-id=main
+  _TRIGGER_ID: main
+  _SERVICE_NAME: backend
+  _DEPLOY_REGION: europe-west1
+  _GCR_HOSTNAME: eu.gcr.io
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+  - backend
