@@ -354,7 +354,7 @@ async function accountSearch(req, res) {
     if (matches && matches.length) {
       accounts = matches;
     }
-    else {
+    else if(host) {
       ({ accounts } = await apiGet(req, `/api/v2/search?q=${encodeURIComponent(term)}${type && ('&type=' + type)}`));
 
       for (account of accounts) {
