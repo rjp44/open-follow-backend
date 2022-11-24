@@ -76,7 +76,7 @@ function attach(session) {
           matches = await cache.eval(script, { keys: [`user:${mUser}:matches`] });
           matches = matches.map(match => match.reduce((o, m, index) => ((index % 2 === 0) ? { ...o, [m]: match[index + 1] } : o), {}));
         }
-        return matches.map(m => m.id = m.id && parseInt(m.id)).filter(m => m.id);
+        return matches.filter(m => m.id).map(m => ({...m, id: `${m.id}`}));
       };
 
       cache.doCleanup = async function (reason) {
