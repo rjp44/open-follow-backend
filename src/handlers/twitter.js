@@ -1,7 +1,8 @@
 const { Client, auth } = require('twitter-api-sdk');
 const config = require('config');
 const uuid = require('uuid');
-const OAUTH_CONFIG = { client_id: config.get('twitter.client_id'), client_secret: config.get('twitter.client_secret'), callback: config.get('twitter.callback_url'), scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read'] };
+const OAUTH_CONFIG = { client_id: config.get('twitter.client_id'), client_secret: config.get('twitter.client_secret'), scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read'] };
+const oauth_config = (req) => ({...OAUTH_CONFIG, callback: `${req?.headers?.origin}/${config.get('twitter.callback_path')}`});
 
 now = () => (new Date().valueOf());
 staleTime = 30 * 1000;
@@ -16,7 +17,7 @@ function authUrl(req, res, next) {
     }
 
 
-    let authClient = new auth.OAuth2User(OAUTH_CONFIG);
+    let authClient = new auth.OAuth2User(oauth_config(req));
     let client = new Client(authClient);
     ([codeVerifier, state] = [codeVerifier || uuid.v4(), 'initial']);
     url = authClient.generateAuthURL({
@@ -39,7 +40,7 @@ waiting = {};
 async function callback(req, res) {
 
 
-  const authClient = new auth.OAuth2User(OAUTH_CONFIG);
+  const authClient = new auth.OAuth2User(oauth_config(req));
   const client = new Client(authClient);
 
   const { state, code } = req.query;
@@ -129,7 +130,7 @@ async function checkStatus(req, res) {
   req.log.info({ checkStatus: { state, token } });
   try {
     if (token) {
-      const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
+      const authClient = new auth.OAuth2User({ ...oauth_config(req), token });
       const client = new Client(authClient);
 
       const myUser = await client.users.findMyUser({
@@ -170,7 +171,7 @@ async function lists(req, res) {
     if (!(state === 'showtime' && codeVerifier && token && id))
       throw new Error('no/wrong state', { cause: 401 });
 
-    const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
+    const authClient = new auth.OAuth2User({ ...oauth_config(req), token });
     const client = new Client(authClient);
     const listMap = {
       followers: client.users.usersIdFollowers,
@@ -226,7 +227,7 @@ async function logout(req, res) {
   }
 
   try {
-    const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
+    const authClient = new auth.OAuth2User({ ...oauth_config(req), token });
     const client = new Client(authClient);
 
     const response = await authClient.revokeAccessToken();

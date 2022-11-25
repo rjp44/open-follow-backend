@@ -47,11 +47,12 @@ let safeAxios = axios.create({
 
 async function authUrl(req, res) {
   let { server } = req.query;
-  let blobname = `${config.get('backend_host')}-${server}`;
+  let backend_host = (new URL(req.headers.origin)).hostname;
+  let blobname = `${backend_host}-${server}`;
   let blob = await storage.fetch(blobname);
   let credentials = undefined;
   const client_name = config.get("mastodon.client_name");
-  const redirect_uri = encodeURIComponent(config.get("mastodon.redirect_uri"));
+  const redirect_uri = encodeURIComponent(`${req.headers.origin}/${config.get("mastodon.redirect_path")}`);
   const scopes = encodeURIComponent("read follow");
   let url;
 
@@ -180,7 +181,6 @@ async function doCache(cache) {
       let dir;
       while ((dir = await rateLimit.get(`${url}&offset=${count}`)) && dir?.status === 200 && dir.data.length > 0) {
         if (!Array.isArray(dir.data)) {
-          console.log({ url, data: typeof dir.data, status: dir.status, dir: dir }, 'account error');
           continue;
         }
         for (account of dir.data) {
@@ -191,7 +191,6 @@ async function doCache(cache) {
         }
         count += dir.data.length;
         let status = `Saved ${dir.data.length} records of ${count}`;
-        console.log({ status });
         cache.set('admin:directory:error:count', count);
         cache.set('admin:directory:status', status);
       }
@@ -200,7 +199,6 @@ async function doCache(cache) {
     catch (err) {
       cache.set('admin:directory:error', `error at count ${count} ${err}`);
       cache.set('admin:directory:error:count', count);
-      console.log({ err });
       if (err.code === 'ERR_BAD_RESPONSE') {
         const restartTime = config.get('mastodon.request.restart_time');
         restartTime && console.log(`got error ${err} will restart in ${restartTime / 1000}s`);
@@ -217,7 +215,7 @@ async function doCache(cache) {
 
 async function callback(req, res) {
 
-  const redirect_uri = config.get("mastodon.redirect_uri");
+  const redirect_uri = `${req.headers.origin}/${config.get("mastodon.redirect_path")}`;
   const scopes = "read follow";
 
   const { state, url, host, client_id, client_secret, uid } = req.session.mastodon || {};

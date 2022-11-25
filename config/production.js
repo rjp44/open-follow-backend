@@ -1,17 +1,20 @@
 const { config } = require("dotenv");
 
 module.exports = {
-  backend_method: 'https',
-  backend_host: process.env.BACKEND_HOST || 'openfollow.me',
+  backend_method: "https",
+  backend_host: process.env.BACKEND_HOST || "openfollow.me",
   storage: {
-    url: 'gcs://credentials/cloudCredentials:openfollow@persist-openfollow'
+    url: "gcs://credentials/cloudCredentials:openfollow@persist-openfollow",
   },
   session: {
+    cookie: {
+      secure: true,
+    },
     store: {
       redis: {
         host: process.env.REDIS_IP,
-        ttl: 86400
-      }
-    }
-  }
+        ttl: 86400,
+      },
+    },
+  },
 };

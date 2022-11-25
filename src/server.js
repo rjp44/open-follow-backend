@@ -20,12 +20,12 @@ server.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true,
-    sameSite: 'none',
-    httpOnly: false,
+    secure: config.get('session.cookie.secure'),
+    sameSite: true,
+    httpOnly: true,
   }
 }));
-
+console.log({ secure: config.get("session.cookie.secure") });
 
 
 if (cache) {

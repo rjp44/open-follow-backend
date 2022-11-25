@@ -1,28 +1,29 @@
-const defer = require('config/defer').deferConfig;
+const defer = require("config/defer").deferConfig;
 
 module.exports = {
-  backend_method: 'http',
-  backend_host: 'localhost:3000',
-  directory_host: 'mastodon.social',
+  directory_host: "mastodon.social",
   port: process.env.PORT || 8888,
   twitter: {
-    callback_url: defer(function () { return `${this.backend_method}://${this.backend_host}/callback/twitter`; }),
-    client_id: process.env.TWITTER_CLIENT_KEY || 'dummy_key',
-    client_secret: process.env.TWITTER_CLIENT_SECRET || 'dummy_secret',
+    callback_path: 'callback/twitter',
+    client_id: process.env.TWITTER_CLIENT_KEY || "dummy_key",
+    client_secret: process.env.TWITTER_CLIENT_SECRET || "dummy_secret",
   },
   mastodon: {
-    redirect_uri: defer(function () { return `${this.backend_method}://${this.backend_host}/callback/mastodon`; }),
-    client_name: 'OpenFollow',
-    lists_key: process.env.MASTODON_LISTS_SECRET || 'dummy_key',
-    client_id: process.env.MASTODON_CLIENT_SECRET || 'dummy_secret',
+    redirect_path: 'callback/mastodon',
+    client_name: "OpenFollow",
+    lists_key: process.env.MASTODON_LISTS_SECRET || "dummy_key",
+    client_id: process.env.MASTODON_CLIENT_SECRET || "dummy_secret",
     request: {
-      restart_time: 30000
-    }
+      restart_time: 30000,
+    },
   },
   storage: {
-    url: 'local://credentials/storage?mode=700'
+    url: "local://credentials/storage?mode=700",
   },
   session: {
-    secret: 'veedEX2zkPNyMs9YeBgO'
+    cookie: {
+      secure: true,
+    },
+    secret: "veedEX2zkPNyMs9YeBgO",
   },
 };
