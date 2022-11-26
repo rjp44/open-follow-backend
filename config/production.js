@@ -8,7 +8,7 @@ module.exports = {
   },
   session: {
     cookie: {
-      secure: true,
+      secure: false,
     },
     store: {
       redis: {
