@@ -199,10 +199,10 @@ async function lists(req, res) {
       page.data && page.data.forEach(data => {
         data.entities =
           data.entities?.description?.urls
-            ?.map((url) => url.expanded)
+            ?.map((url) => url.expanded_url)
             .join(" ") + " "+
           data.entities?.url?.urls
-            ?.map((url) => url.expanded)
+            ?.map((url) => url.expanded_url)
             .join(" ");
         res.write(JSON.stringify(data) + ',')
       });
