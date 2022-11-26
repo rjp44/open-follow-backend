@@ -39,8 +39,8 @@ server.use(express.json());
 
 server.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:5001', 'https://openfollow.me', 'https://www.openfollow.me', 'https://simpler-oauth.open-follow.pages.dev'],
-  allowedHeaders: ['Cookie', 'Link'],
-  exposedHeaders: ['Link'],
+  allowedHeaders: ['Cookie', 'Link', 'Content-Type'],
+  exposedHeaders: ['Link', ],
   credentials: true,
 
 }));
@@ -79,9 +79,9 @@ server.get("/mastodon/checkLogin", mastodon.checkLogin);
 server.get("/mastodon/checkStatus", mastodon.checkStatus);
 server.get("/mastodon/logout", mastodon.logout);
 server.use("/mastodon/passthru", mastodon.passthru);
-server.use("/mastodon/account/search", mastodon.accountSearch);
-server.use("/admin/directory/load", mastodon.cacheDir);
-server.use("/admin/directory/status", mastodon.cacheStatus);
+server.get("/mastodon/account/search", mastodon.accountSearch);
+server.get("/admin/directory/load", mastodon.cacheDir);
+server.get("/admin/directory/status", mastodon.cacheStatus);
 
 
 server.get("/ping", (req, res) => {
