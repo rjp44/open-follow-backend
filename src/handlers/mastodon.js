@@ -343,8 +343,8 @@ async function passthru(req, res) {
     result.headers.link && res.set("Link", result.headers.link);
     res.status(result.status).json(result.data);
   } catch (err) {
-    req.log.error({ err }, "passthru");
-    res.status(403).send(err);
+    req.log.error({ message: err.message }, "passthru");
+    res.status(403).send(err.message);
   }
 }
 
