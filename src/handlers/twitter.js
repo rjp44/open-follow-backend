@@ -189,14 +189,23 @@ async function lists(req, res) {
 
     items = listOperation(id, {
       'user.fields': [
-        'description', 'profile_image_url', 'username', 'verified'
+        'description', 'entities', 'profile_image_url', 'username', 'verified'
       ],
       max_results: 1000
     }, { max_results: 1000 });
     res.type('txt');
     for await (const page of items) {
 
-      page.data && page.data.forEach(data => res.write(JSON.stringify(data) + ','));
+      page.data && page.data.forEach(data => {
+        data.entities =
+          data.entities?.description?.urls
+            ?.map((url) => url.expanded)
+            .join(" ") + " "+
+          data.entities?.url?.urls
+            ?.map((url) => url.expanded)
+            .join(" ");
+        res.write(JSON.stringify(data) + ',')
+      });
     }
     res.end();
 
