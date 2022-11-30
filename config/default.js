@@ -16,6 +16,9 @@ module.exports = {
     request: {
       restart_time: 30000,
     },
+    server_list: {
+      additional: 'openshare.me'
+    }
   },
   storage: {
     url: "local://credentials/storage?mode=700",

@@ -79,9 +79,11 @@ server.get("/mastodon/checkLogin", mastodon.checkLogin);
 server.get("/mastodon/checkStatus", mastodon.checkStatus);
 server.get("/mastodon/logout", mastodon.logout);
 server.use("/mastodon/passthru", mastodon.passthru);
+server.post("/mastodon/account/:list", mastodon.add);
 server.get("/mastodon/account/search", mastodon.accountSearch);
 server.get("/admin/directory/load", mastodon.cacheDir);
 server.get("/admin/directory/status", mastodon.cacheStatus);
+
 
 
 server.get("/ping", (req, res) => {

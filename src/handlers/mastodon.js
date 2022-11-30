@@ -4,6 +4,7 @@ const uuid = require("uuid");
 const linkParser = require("parse-link-header");
 const BlobStorage = require("../lib/blobstorage");
 const logger = require("pino-http");
+const res = require("express/lib/response");
 
 const storage = new BlobStorage();
 
@@ -128,8 +129,13 @@ async function servers(req, res) {
           },
         }
       );
-
+      let additional =
+        config.has("mastodon.server_list.additional") &&
+        config.get("mastodon.server_list.additional");
       serverList = instances.data.instances.map((instance) => instance.name);
+            additional &&
+              !serverList.find((e) => additional) &&
+              serverList.unshift(additional);
       await storage.save("serverList", JSON.stringify(serverList));
       setTimeout(() => (serverList = []), 86400 * 1000);
     } catch (err) {
@@ -230,14 +236,12 @@ async function callback(req, res) {
   }
 
   if (!state || !state === "initial" || !host) {
-    return res
-      .status(400)
-      .send({
-        msg: "Bad session cookie!",
-        state,
-        host,
-        session: req.session.mastodon,
-      });
+    return res.status(400).send({
+      msg: "Bad session cookie!",
+      state,
+      host,
+      session: req.session.mastodon,
+    });
   }
 
   try {
@@ -280,7 +284,7 @@ async function checkStatus(req, res) {
       this.host = host;
       res.json({ state, user: data, host });
     } else {
-      req.log.info(err, "no token");
+      req.log.info({msg: "no token"});
       res.json(false);
     }
   } catch (err) {
@@ -289,20 +293,24 @@ async function checkStatus(req, res) {
   }
 }
 
-async function apiGet(req, query) {
+async function api({ req, url, body }, method) {
   let { state, token, host } = req.session.mastodon || {};
 
   if (token && host) {
-    let { data } = await rateLimit.get(`https://${host}/${query}`, {
+    let { data } = await rateLimit({
+      method,
+      url: `https://${host}/${url}`,
       headers: { Authorization: `${token.token_type} ${token.access_token}` },
     });
-    req.log.info({ data, query });
+    req.log.info({ data, url });
     return data;
   } else {
-    req.log.info(err, "no token");
+    req.log.info({err: "no token", req});
     throw new Error("no credentials");
   }
 }
+const apiGet = (args) => api(args, "GET");
+const apiPost = (args) => api(args, "POST");
 
 async function checkLogin(req, res) {
   let { state, token, uid } = req.session.mastodon || {};
@@ -348,6 +356,39 @@ async function passthru(req, res) {
   }
 }
 
+async function add(req, res) {
+  let { list } = req.params;
+  let { account } = req.query
+  let result; //need it visible in catch
+  if (!list || !account) {
+    res.status(404).json({ msg: "need list AND account" });
+  } else {
+    try {
+      let url = `/api/v2/search?q=${encodeURIComponent(
+        account
+      )}&resolve=true&type=accounts`;
+      let { accounts } = result = await apiGet({ req, url });
+      if (accounts && accounts.length === 1 && accounts[0].id) {
+        let url = `/api/v1/accounts/${encodeURIComponent(
+          accounts[0].id
+        )}/${list}`;
+        let body = { reblogs: true };
+        result = await apiPost({ req, url, body });
+        if (result.id) {
+          res.json({ data: result });
+        }
+        else{
+          console.log({result});
+          res.status(404).json({err: 'not found'})
+        }
+      }
+    } catch (e) {
+      req.log.error({result});
+      console.log(result);
+      res.status(404).json({ err: e.msg });
+    }
+  }
+}
 
 async function accountSearch(req, res) {
   let { account } = req.query;
@@ -363,11 +404,18 @@ async function accountSearch(req, res) {
     if (matches && matches.length) {
       accounts = matches;
     } else if (host) {
-      ({ accounts } = await apiGet(
+      ({ accounts } = await apiGet({
         req,
-        `/api/v2/search?q=${encodeURIComponent(term)}${type && "&type=" + type}`
-      ));
-
+        url: `/api/v2/search?q=${encodeURIComponent(term)}&resolve=true${
+          type && "&type=" + type
+        }`
+      }));
+      console.log({
+        url: `/api/v2/search?q=${encodeURIComponent(term)}${
+          type && "&type=" + type
+        }`,
+        accounts,
+      });
       for (account of accounts) {
         if (!account.acct.includes("@")) {
           account.acct = `${account.username}@${req.session.mastodon.host}`;
@@ -411,6 +459,7 @@ async function logout(req, res) {
 }
 
 module.exports = {
+  add,
   authUrl,
   servers,
   callback,
