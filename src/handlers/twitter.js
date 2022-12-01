@@ -212,14 +212,6 @@ async function lists(req, res) {
   }
   catch (err) {
     req.log.error(err, 'reading list');
-    if (err.status === 429) {
-      res.end();
-    }
-    else {
-
-      return res.status(err.cause && parseInt(err.cause) === err.cause ? err.cause : 400).json(err);
-    }
-
   }
 
 };
