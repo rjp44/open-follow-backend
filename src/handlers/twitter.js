@@ -81,7 +81,7 @@ async function callback(req, res) {
       myUser: myUser.data
     };
     req.log.info({ savedState: { session: req.session.twitter } }, 'savedState');
-    res.send('<script>window.close();</script>');
+    res.json(true);
   }
   catch (error) {
     req.log.error(error);

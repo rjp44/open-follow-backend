@@ -259,7 +259,7 @@ async function callback(req, res) {
       token,
       state: "showtime",
     };
-    res.send("<script>window.close();</script>");
+    res.json(true);
     //res.json(followers.data);
   } catch (error) {
     res.send(
